@@ -3,8 +3,15 @@ import cv2
 
 start_time = time.time()
 
-image = cv2.imread('/content/drive/My Drive/Colab Media/Conditions/v5.2.png')
-#cont = cv2.imread('/content/drive/My Drive/Colab Media/Colour Segmentation/morphed 4.png', 0)
+# define the path of the video file
+filepath = ''
+
+vidcap = cv2.VideoCapture(filepath)
+if (vidcap.isOpened()):
+    print("Video capture opened")
+else:
+    print("Failed to open video capture")
+ret,frame = vidcap.read()
 
 #green range HSV
 glhsv = np.array([40,40, 40])
@@ -29,10 +36,11 @@ zurgb = np.array([255, 255, 255])
 kernel = np.ones((2,2), np.uint8)
 
 # HSV conversion for Conditiond 1-4
-hsv = cv2.cvtColor(image,cv2.COLOR_BGR2HSV)
+hsv = cv2.cvtColor(frame,cv2.COLOR_BGR2HSV)
 
 # RGB conversion for Condition 5
-rgb = cv2.cvtColor(image,cv2.COLOR_BGR2RGB)
+# as I could not find an HSV range for Condition 5
+rgb = cv2.cvtColor(frame,cv2.COLOR_BGR2RGB)
 
 # Requires manual input of the HSV field colour range
 mask = cv2.inRange(hsv, xlhsv, xuhsv)
