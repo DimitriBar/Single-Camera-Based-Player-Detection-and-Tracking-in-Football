@@ -1,0 +1,48 @@
+import numpy as np
+import cv2
+start_time = time.time()
+
+#Reading the video
+vidcap = cv2.VideoCapture('/Users/dimitribarbaressos/Desktop/FinalProject/Media/vid_3.mp4')
+if (vidcap.isOpened()):
+    print("Video capture opened")
+else:
+    print("Failed to open video capture")
+ret,frame = vidcap.read()
+
+kernel = np.ones((2,2), np.uint8)
+
+h1, s1, v1 = (118/2), ((48/100)*255), ((49/100)*255)
+h2, s2, v2 = (58/2), ((16/100)*255), ((73/100)*255)
+h3, s3, v3 = (114/2), ((12/100)*255), ((67/100)*255)
+h4, s4, v4 = (113/2), ((18/100)*255), ((78/100)*255)
+h5, s5, v5 = (73/2), ((4/100)*255), ((88/100)*255)
+ 
+# HSV range
+lhsv = np.array([int(h1-20), int(s1/2), 30])
+uhsv = np.array([int(h1+20), 255, 255])
+
+hsv = cv2.cvtColor(frame,cv2.COLOR_BGR2HSV)
+    
+mask = cv2.inRange(hsv, lhsv, uhsv)
+    
+inv = cv2.threshold(mask, 127, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)[1]  
+    
+morphopen = cv2.morphologyEx(inv, cv2.MORPH_OPEN, kernel)
+    
+dilated = cv2.dilate(morphopen, None, iterations = 2)
+
+_, contours,_ = cv2.findContours(dilated, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+
+for contour in contours:
+    (x, y, w, h) = cv2.boundingRect(contour)
+    if cv2.contourArea(contour) < 500:
+        continue
+    if cv2.contourArea(contour) > 10000:
+        continue
+    if h<w:
+        continue
+    cv2.rectangle(frame, (x,y), (x+w,y+h), (0,0,255), 4)
+      
+cv2_imshow(frame)
+print("--- %s seconds ---" % (time.time() - start_time))
