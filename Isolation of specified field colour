@@ -1,0 +1,60 @@
+import numpy as np
+import cv2
+
+start_time = time.time()
+
+image = cv2.imread('/content/drive/My Drive/Colab Media/Conditions/v5.2.png')
+#cont = cv2.imread('/content/drive/My Drive/Colab Media/Colour Segmentation/morphed 4.png', 0)
+
+#green range HSV
+glhsv = np.array([40,40, 40])
+guhsv = np.array([70, 255, 255])
+
+#brown range HSV
+blhsv = np.array([0, 0, 0])
+buhsv = np.array([120, 120, 135])
+
+#3 range HSV
+xlhsv = np.array([0, 0, 0])
+xuhsv = np.array([255, 140, 200])
+
+#4 range HSV
+ylhsv = np.array([30, 0, 60])
+yuhsv = np.array([80, 255, 255])
+
+#5 range RGB
+zlrgb = np.array([155, 0, 155])
+zurgb = np.array([255, 255, 255])
+
+kernel = np.ones((2,2), np.uint8)
+
+# HSV conversion for Conditiond 1-4
+hsv = cv2.cvtColor(image,cv2.COLOR_BGR2HSV)
+
+# RGB conversion for Condition 5
+rgb = cv2.cvtColor(image,cv2.COLOR_BGR2RGB)
+
+# Requires manual input of the HSV field colour range
+mask = cv2.inRange(hsv, xlhsv, xuhsv)
+
+inv = cv2.threshold(mask, 127, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)[1]
+
+morphopen = cv2.morphologyEx(inv, cv2.MORPH_OPEN, kernel)
+
+dilated = cv2.dilate(morphopen, None, iterations = 2)
+
+_, contours, _, = cv2.findContours(dilated, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+
+for contour in contours:
+    (x, y, w, h) = cv2.boundingRect(contour)
+    if cv2.contourArea(contour) < 500:
+        continue
+    if cv2.contourArea(contour) > 10000:
+        continue
+    if h<w:
+        continue
+    cv2.rectangle(image, (x,y), (x+w,y+h), (0,255,0), 4)
+    
+cv2_imshow(image)
+
+print("--- %s seconds ---" % (time.time() - start_time))
