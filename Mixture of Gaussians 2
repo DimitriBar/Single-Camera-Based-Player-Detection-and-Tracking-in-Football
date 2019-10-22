@@ -1,0 +1,58 @@
+start_time = time.time()
+
+kernel = np.ones((2,2), np.uint8)
+font = cv2.FONT_HERSHEY_SIMPLEX
+
+# define filepath
+filepath = 'videos/condition1.mp4'
+
+vidcap = cv2.VideoCapture(filepath)
+if vidcap.isOpened():
+  print("Video capture opened")
+else:
+  print("Failed to open VideoCapture")
+
+subtractor = cv2.createBackgroundSubtractorMOG2(history=10, varThreshold=50, detectShadows=True)
+
+while vidcap.isOpened():
+  
+  ret, frame = vidcap.read()
+  if not ret:
+    break
+  mask = subtractor.apply(frame)
+  #cv2_imshow(mask)
+  _, thresh = cv2.threshold(mask, 20, 255, cv2.THRESH_BINARY)
+  #cv2_imshow(thresh)
+  morphopen = cv2.morphologyEx(thresh, cv2.MORPH_OPEN, kernel)
+  #cv2_imshow(morphopen)
+  dilated = cv2.dilate(morphopen, None, iterations = 2)
+  #cv2_imshow(dilated)
+  _, contours,_ = cv2.findContours(dilated, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+  #cv2.drawContours(image, contours, -1, (0, 255, 0), 2)
+  #cv2_imshow(image)
+
+  for contour in contours:
+    
+    (x, y, w, h) = cv2.boundingRect(contour)
+    if cv2.contourArea(contour) < 500:
+        continue
+    if cv2.contourArea(contour) > 10000:
+        continue
+    if h<w:
+        continue
+    cv2.rectangle(frame, (x,y), (x+w,y+h), (0,255,0), 4)
+      
+  cv2_imshow(frame)
+  
+  ret, f = vidcap.read()
+  if not ret:
+    break
+  avg = np.float32(f)
+  
+  if cv2.waitKey() == 27:
+    break
+    
+cv2.destroyAllWindows()
+vidcap.release()
+
+print("--- %s seconds ---" % (time.time() - start_time))
