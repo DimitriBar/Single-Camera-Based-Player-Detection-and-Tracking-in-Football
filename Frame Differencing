@@ -1,0 +1,57 @@
+start_time = time.time()
+sum = 0
+kernel = np.ones((2,2),np.uint8)
+
+# insert filepath
+filepath = 'videos/conditions1.mp4'
+vidcap = cv2.VideoCapture(filepath)
+
+# read first two frames
+ret, frame1 = vidcap.read()
+ret, frame2 = vidcap.read()
+
+for i in range (0,1):
+    
+  diff = cv2.absdiff(frame1, frame2)
+  #cv2_imshow(diff) 
+    
+  gray = cv2.cvtColor(diff, cv2.COLOR_BGR2GRAY)
+  #cv2_imshow(gray)
+    
+  blur = cv2.GaussianBlur(gray, (5,5), 0)
+  #cv2_imshow(blur)
+
+  _,thresh = cv2.threshold(blur, 20, 255, cv2.THRESH_BINARY)
+  #cv2_imshow(thresh)
+
+  opened = cv2.morphologyEx(thresh, cv2.MORPH_OPEN, kernel)
+  #cv2_imshow(opened)
+  
+  dilated = cv2.dilate(opened, None, iterations = 3)
+  #cv2_imshow(dilated)      
+    
+  _, contours, _, = cv2.findContours(dilated, cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
+
+  for contour in contours:
+    
+    (x, y, w, h) = cv2.boundingRect(contour)
+    if cv2.contourArea(contour) < 500:
+      continue
+    if cv2.contourArea(contour) > 10000:
+      continue
+    if h<w:
+      continue
+    cv2.rectangle(frame1, (x,y), (x+w,y+h), (255,0,0), 4)
+    
+  cv2_imshow(frame1)
+  frame1 = frame2
+  ret, frame2 = vidcap.read()
+  if not ret:
+    break
+  if cv2.waitKey(1) == 27:
+    break
+
+cv2.destroyAllWindows()
+vidcap.release()
+
+print("--- %s seconds ---" % (time.time() - start_time))
